@@ -6,12 +6,16 @@
 #include "opencv2/highgui/highgui_c.h"
 
 #include "ascii.h"
+#include "spi.h"
 #include <stdexcept>
+#include <chrono>
+#include <thread>
 
 #include <cctype>
 #include <iostream>
 #include <iterator>
 #include <stdio.h>
+
 
 using namespace std;
 using namespace cv;
@@ -39,6 +43,16 @@ string cascadeName = "opencv/data/haarcascades/haarcascade_frontalface_alt.xml";
 
 int main( int argc, const char** argv )
 {
+    SPI spi;
+    uint8_t tx, rx;
+    while(true) {
+      for(tx = 0; tx!=255; tx++) {
+        spi.transfer(&tx, &rx, 1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+      }
+    }
+
+
     CvCapture* capture = 0;
     Mat frame, frameCopy, image;
     const string scaleOpt = "--scale=";
@@ -157,4 +171,3 @@ bool detectAndCrop( Mat& img, CascadeClassifier& cascade,
     }
     return false;
 }
-

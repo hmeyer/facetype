@@ -32,14 +32,17 @@ Ascii::Ascii() :p_(new aa_renderparams({47, 33, 2.0, AA_FLOYD_S, 1, 0})) {
   aa_hardwareparams hp = aa_defparams;
   hp.supported &= ~AA_DIM_MASK;
   hp.supported |= AA_BOLD_MASK;
-//  hp.supported &= ~AA_BOLD_MASK;
   hp.supported &= ~AA_BOLDFONT_MASK;
   hp.supported &= ~AA_EXTENDED;
   hp.supported &= ~AA_EIGHT;
+  hp.width = 80;
+  hp.height = 50;
   ctx_ = aa_autoinit(&hp);
   if(!ctx_) throw std::runtime_error("could not initialize aalib");
   ctx_->driver = &mem_d;
   ctx_->params.supported |= AA_BOLD_MASK;
+  ctx_->params.mmwidth = 210;
+  ctx_->params.mmheight = 297;
 }
 Ascii::~Ascii() {
   aa_close(ctx_);
