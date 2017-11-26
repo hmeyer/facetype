@@ -13,6 +13,7 @@
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
 
+
 #include <stdexcept>
 #include <iostream>
 
@@ -56,7 +57,7 @@ SPI::SPI(const std::string& device) {
 		std::runtime_error("can't get max speed hz");
 
 	std::cout << "spi mode: 0x" << std::hex  << mode_ << std::dec << std::endl;
-	std::cout << "bits per word: " << bits_ << std::endl;
+	std::cout << "bits per word: " << +bits_ << std::endl;
 	std::cout << "max speed: " << speed_ << " Hz (" << speed_/1000 << " KHz)" << std::endl;
 }
 
