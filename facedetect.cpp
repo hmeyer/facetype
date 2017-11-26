@@ -6,7 +6,7 @@
 #include "opencv2/highgui/highgui_c.h"
 
 #include "ascii.h"
-#include "spi.h"
+#include "shift_reg.h"
 #include <stdexcept>
 #include <chrono>
 #include <thread>
@@ -43,13 +43,15 @@ string cascadeName = "opencv/data/haarcascades/haarcascade_frontalface_alt.xml";
 
 int main( int argc, const char** argv )
 {
-    SPI spi;
+    ShiftReg shifty(22);
     uint8_t tx, rx;
     while(true) {
-      for(tx = 0; tx!=255; tx++) {
-        spi.transfer(&tx, &rx, 1);
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+      for(int i = 0; i<8; i++) {
+        tx =0xff ^ (1 << i);
+        shifty.transfer(&tx, &rx, 1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
       }
+      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 
 
