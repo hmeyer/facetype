@@ -9,7 +9,7 @@
 #include "shift_reg.h"
 #include <stdexcept>
 #include <chrono>
-#include <thread>
+#include "wiringPi.h"
 
 #include <cctype>
 #include <iostream>
@@ -43,15 +43,16 @@ string cascadeName = "opencv/data/haarcascades/haarcascade_frontalface_alt.xml";
 
 int main( int argc, const char** argv )
 {
-    ShiftReg shifty(22);
-    uint8_t tx, rx;
+    wiringPiSetup();
+    ShiftReg shifty(4, 3);
+    uint8_t tx;
+    float x = 0;
     while(true) {
-      for(int i = 0; i<8; i++) {
-        tx =0xff ^ (1 << i);
-        shifty.transfer(&tx, &rx, 1);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      }
-      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+      int y = sin(x) * 4 + 4;
+      tx =0xff ^ (1 << y);
+      shifty.transfer(&tx, 1);
+      delay(10);
+      x += 0.057;
     }
 
 
