@@ -6,7 +6,7 @@
 #include "opencv2/highgui/highgui_c.h"
 
 #include "ascii.h"
-#include "shift_reg.h"
+#include "typewriter.h"
 #include <stdexcept>
 #include <chrono>
 #include "wiringPi.h"
@@ -44,15 +44,13 @@ string cascadeName = "opencv/data/haarcascades/haarcascade_frontalface_alt.xml";
 int main( int argc, const char** argv )
 {
     wiringPiSetup();
-    ShiftReg shifty(4, 3);
-    uint8_t tx;
-    float x = 0;
+    Typewriter typi;
     while(true) {
-      int y = sin(x) * 4 + 4;
-      tx =0xff ^ (1 << y);
-      shifty.transfer(&tx, 1);
-      delay(10);
-      x += 0.057;
+      for (int x=0; x < 64; x++) {
+        typi.press_key(x);
+	delay(500);
+      }
+      delay(5000);
     }
 
 
