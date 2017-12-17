@@ -46,11 +46,12 @@ int main( int argc, const char** argv )
     wiringPiSetup();
     Typewriter typi;
     while(true) {
-      for (int x=0; x < 64; x++) {
-        typi.press_key(x);
-	delay(500);
-      }
-      delay(5000);
+	for (int key = 0; key < 64; key++) {
+          std::cout << "printing: " << key << std::endl;
+          typi.press_key(key);
+	  delay(500);
+        }
+	delay(5000);
     }
 
 

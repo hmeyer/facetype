@@ -1,5 +1,6 @@
 #include "typewriter.h"
 #include <wiringPi.h>
+#include <iostream>
 
 const int kOutPort[] = {
   0, 1, 2, 3, 4, 5, 6, 7};
@@ -22,15 +23,25 @@ Typewriter::Typewriter() {
   pinMode(kEnablePin, OUTPUT);
 }
 
+void loggingWrite(int pin, bool value) {
+  std::cout << "P" << pin << ":" << (value?"-":"#") << " ";
+  digitalWrite(pin, value);
+}
+
 void Typewriter::press_key(int key) {
-  for (int i = 0; i < 7; i++) {
-    digitalWrite(kOutPort[i], key & (1<<i));
+  int key_mod_8 = key & 7;
+  for (int i = 0; i < 8; i++) {
+    loggingWrite(kOutPort[i], i != key_mod_8);
   }
+  std::cout << std::endl;
   int select = (key >> 3) & 7;
   for (int i = 0; i < 3; i++) {
-    digitalWrite(kSelectPort[i], select & (1<<i));
+    loggingWrite(kSelectPort[i], select & (1<<i));
   }
-  digitalWrite(kEnablePin, LOW);
+  std::cout << std::endl;
+  loggingWrite(kEnablePin, LOW);
+  std::cout << std::endl;
   delay(100);
-  digitalWrite(kEnablePin, HIGH);
+  loggingWrite(kEnablePin, HIGH);
+  std::cout << std::endl;
 }
