@@ -1,6 +1,6 @@
 #include "typewriter.h"
-#include <wiringPi.h>
 #include <iostream>
+//#include <wiringPi.h>
 
 const int kOutPort[] = {
   0, 1, 2, 3, 4, 5, 6, 7};
@@ -11,6 +11,7 @@ const int kSelectPort[] = {
 const int kEnablePin = 10;
 
 Typewriter::Typewriter() {
+  wiringPiSetup();
   for (auto pin : kOutPort) {
     digitalWrite(pin, HIGH);
     pinMode(pin, OUTPUT);
@@ -39,9 +40,9 @@ void Typewriter::press_key(int key) {
     loggingWrite(kSelectPort[i], select & (1<<i));
   }
   std::cout << std::endl;
-  loggingWrite(kEnablePin, LOW);
+  loggingWrite(kEnablePin, false);
   std::cout << std::endl;
   delay(100);
-  loggingWrite(kEnablePin, HIGH);
+  loggingWrite(kEnablePin, true);
   std::cout << std::endl;
 }

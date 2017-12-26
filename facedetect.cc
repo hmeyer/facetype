@@ -9,7 +9,6 @@
 #include "typewriter.h"
 #include <stdexcept>
 #include <chrono>
-#include "wiringPi.h"
 
 #include <cctype>
 #include <iostream>
@@ -41,92 +40,98 @@ bool detectAndCrop( Mat& img, CascadeClassifier& cascade,
 
 string cascadeName = "opencv/data/haarcascades/haarcascade_frontalface_alt.xml";
 
-int main( int argc, const char** argv )
-{
-    wiringPiSetup();
-    Typewriter typi;
-    while(true) {
-	for (int key = 0; key < 64; key++) {
-          std::cout << "printing: " << key << std::endl;
-          typi.press_key(key);
-	  delay(500);
-        }
-	delay(5000);
-    }
+int main( int argc, const char** argv ) {
+  Typewriter typi;
+  // while(true) {
+  //   for (int key = 0; key < 64; key++) {
+  //     std::cout << "printing: " << key << std::endl;
+  //     typi.press_key(key);
+  //     delay(500);
+  //   }
+  //   delay(5000);
+  // }
 
 
-    CvCapture* capture = 0;
-    Mat frame, frameCopy, image;
-    const string scaleOpt = "--scale=";
-    size_t scaleOptLen = scaleOpt.length();
-    const string cascadeOpt = "--cascade=";
-    size_t cascadeOptLen = cascadeOpt.length();
-    string inputName;
+  CvCapture* capture = 0;
+  Mat frame, frameCopy, image;
+  const string scaleOpt = "--scale=";
+  size_t scaleOptLen = scaleOpt.length();
+  const string cascadeOpt = "--cascade=";
+  size_t cascadeOptLen = cascadeOpt.length();
+  string inputName;
 
-    help();
+  help();
 
-    CascadeClassifier cascade;
-    double scale = 1;
+  CascadeClassifier cascade;
+  double scale = 1;
 
-    for( int i = 1; i < argc; i++ )
-    {
-        cout << "Processing " << i << " " <<  argv[i] << endl;
-        if( cascadeOpt.compare( 0, cascadeOptLen, argv[i], cascadeOptLen ) == 0 )
-        {
-            cascadeName.assign( argv[i] + cascadeOptLen );
-            cout << "  from which we have cascadeName= " << cascadeName << endl;
-        }
-        else if( scaleOpt.compare( 0, scaleOptLen, argv[i], scaleOptLen ) == 0 )
-        {
-            if( !sscanf( argv[i] + scaleOpt.length(), "%lf", &scale ) || scale < 1 )
-                scale = 1;
-            cout << " from which we read scale = " << scale << endl;
-        }
-        else if( argv[i][0] == '-' )
-        {
-            cerr << "WARNING: Unknown option %s" << argv[i] << endl;
-        }
-        else
-            inputName.assign( argv[i] );
-    }
+  for( int i = 1; i < argc; i++ )
+  {
+      cout << "Processing " << i << " " <<  argv[i] << endl;
+      if( cascadeOpt.compare( 0, cascadeOptLen, argv[i], cascadeOptLen ) == 0 )
+      {
+          cascadeName.assign( argv[i] + cascadeOptLen );
+          cout << "  from which we have cascadeName= " << cascadeName << endl;
+      }
+      else if( scaleOpt.compare( 0, scaleOptLen, argv[i], scaleOptLen ) == 0 )
+      {
+          if( !sscanf( argv[i] + scaleOpt.length(), "%lf", &scale ) || scale < 1 )
+              scale = 1;
+          cout << " from which we read scale = " << scale << endl;
+      }
+      else if( argv[i][0] == '-' )
+      {
+          cerr << "WARNING: Unknown option %s" << argv[i] << endl;
+      }
+      else
+          inputName.assign( argv[i] );
+  }
 
-    if( !cascade.load( cascadeName ) )
-    {
-        cerr << "ERROR: Could not load classifier cascade" << endl;
-        help();
+  if( !cascade.load( cascadeName ) )
+  {
+      cerr << "ERROR: Could not load classifier cascade" << endl;
+      help();
+      return -1;
+  }
+
+  if( inputName.empty() || (isdigit(inputName.c_str()[0]) && inputName.c_str()[1] == '\0') )
+  {
+      capture = cvCaptureFromCAM( inputName.empty() ? 0 : inputName.c_str()[0] - '0' );
+      int c = inputName.empty() ? 0 : inputName.c_str()[0] - '0' ;
+      if(!capture) {
+        cerr << "Capture from CAM " <<  c << " didn't work" << endl;
         return -1;
+      }
+  }
+
+  Ascii ascii;
+  cv::Mat croppedFaceImage;
+
+  cout << "In capture ..." << endl;
+  cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 320);
+  cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 200);
+  cout << "resolution: " << cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH) << " x  " << cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT) << endl;
+  while(!ascii.eventHappened()) {
+    cout << "query frame" << endl;
+    IplImage* iplImg = cvQueryFrame( capture );
+    cout << "arrToMat" << endl;
+    frame = cv::cvarrToMat(iplImg);
+    if( frame.empty() )
+    break;
+    cout << "copy frame" << endl;
+    if( iplImg->origin == IPL_ORIGIN_TL )
+      frame.copyTo( frameCopy );
+    else
+      flip( frame, frameCopy, 0 );
+
+    cout << "detecting" << endl;
+    if (detectAndCrop( frameCopy, cascade, scale, &croppedFaceImage, ascii.aspect() )) {
+      cout << "display" << endl;
+      ascii.displayImage(&croppedFaceImage);
     }
-
-    if( inputName.empty() || (isdigit(inputName.c_str()[0]) && inputName.c_str()[1] == '\0') )
-    {
-        capture = cvCaptureFromCAM( inputName.empty() ? 0 : inputName.c_str()[0] - '0' );
-        int c = inputName.empty() ? 0 : inputName.c_str()[0] - '0' ;
-        if(!capture) cout << "Capture from CAM " <<  c << " didn't work" << endl;
-    }
-
-    Ascii ascii;
-    cv::Mat croppedFaceImage;
-
-    if( capture )
-    {
-        cout << "In capture ..." << endl;
-	while(!ascii.eventHappened()) {
-            IplImage* iplImg = cvQueryFrame( capture );
-            frame = cv::cvarrToMat(iplImg);
-            if( frame.empty() )
-                break;
-            if( iplImg->origin == IPL_ORIGIN_TL )
-                frame.copyTo( frameCopy );
-            else
-                flip( frame, frameCopy, 0 );
-
-            if (detectAndCrop( frameCopy, cascade, scale, &croppedFaceImage, ascii.aspect() )) {
-		ascii.displayImage(&croppedFaceImage);
-	    }
-        }
-        cvReleaseCapture( &capture );
-    }
-    return 0;
+  }
+  cvReleaseCapture( &capture );
+  return 0;
 }
 
 bool detectAndCrop( Mat& img, CascadeClassifier& cascade,
