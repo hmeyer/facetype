@@ -7,6 +7,7 @@
 
 #include "ascii.h"
 #include "typewriter.h"
+#include <wiringPi.h>
 #include <stdexcept>
 #include <chrono>
 
@@ -42,14 +43,14 @@ string cascadeName = "opencv/data/haarcascades/haarcascade_frontalface_alt.xml";
 
 int main( int argc, const char** argv ) {
   Typewriter typi;
-  // while(true) {
-  //   for (int key = 0; key < 64; key++) {
-  //     std::cout << "printing: " << key << std::endl;
-  //     typi.press_key(key);
-  //     delay(500);
-  //   }
-  //   delay(5000);
-  // }
+  while(true) {
+    for (int key = 0; key < 64; key++) {
+      std::cout << "printing: " << key << std::endl;
+      typi.press_key(key);
+      delay(50);
+    }
+    delay(5000);
+  }
 
 
   CvCapture* capture = 0;
