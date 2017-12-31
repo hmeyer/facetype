@@ -1,14 +1,23 @@
 #include "typewriter.h"
 #include <iostream>
-//#include <wiringPi.h>
+#include <wiringPi.h>
 
 const int kOutPort[] = {
+//  0, 2, 3, 12, 13, 14, 21, 22
   0, 1, 2, 3, 4, 5, 6, 7};
 
 const int kSelectPort[] = {
+//  23, 24, 25};
   11, 8, 9};
 
+// const int kEnablePin = 7;
 const int kEnablePin = 10;
+const int kLShiftPin = 29;
+const int kModPin = 28;
+const int kCodePin = 27;
+
+// Keyboard Matrix duty cycle is 8ms, so 10ms should be safe.
+const int kKeyPressDurationMs = 10;
 
 Typewriter::Typewriter() {
   wiringPiSetup();
@@ -42,7 +51,7 @@ void Typewriter::press_key(int key) {
   std::cout << std::endl;
   loggingWrite(kEnablePin, false);
   std::cout << std::endl;
-  delay(100);
+  delay(kKeyPressDurationMs);
   loggingWrite(kEnablePin, true);
   std::cout << std::endl;
 }
