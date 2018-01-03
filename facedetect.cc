@@ -13,6 +13,7 @@
 
 #include <cctype>
 #include <iostream>
+#include <string>
 #include <iterator>
 #include <stdio.h>
 
@@ -44,10 +45,9 @@ string cascadeName = "opencv/data/haarcascades/haarcascade_frontalface_alt.xml";
 int main( int argc, const char** argv ) {
   Typewriter typi;
   while(true) {
-    for (int key = 0; key < 64; key++) {
-      std::cout << "printing: " << key << std::endl;
-      typi.press_key(key);
-      delay(50);
+    for (char c = 0; c < 255; c++) {
+      std::cout << "printing: " << +c << "(" << c << ")" << std::endl;
+      typi.print_char(c);
     }
     delay(5000);
   }
