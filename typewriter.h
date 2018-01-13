@@ -15,5 +15,6 @@ void enable_shift(bool enable);
 void enable_mod(bool enable);
 void enable_code(bool enable);
 private:
+void print_char_base(char c, bool undead=false);
 size_t line_chars_ = 0;
 };
