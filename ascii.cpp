@@ -1,32 +1,11 @@
 #include "ascii.h"
+#include "typewriterfont.h"
 #include <aalib.h>
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
-#include <iostream>
 
 using namespace std;
 using namespace cv;
-
-class StreamAttr {
-public:
-explicit StreamAttr(std::ostream* stream) : stream_(stream) {
-}
-void set(int attr) {
-        if (attr == prev_) return;
-        prev_ = attr;
-        switch (attr) {
-        // Bold off
-        case 0: *stream_ << "\e[0m"; break;
-        // Bold on
-        case 2: *stream_ << "\e[1m"; break;
-        default: std::runtime_error("unkown attr");
-        }
-}
-private:
-int prev_ = -1;
-std::ostream* stream_;
-};
-
 
 Ascii::Ascii() : p_(new aa_renderparams({47, 33, 2.0, AA_FLOYD_S, 1, 0})) {
         aa_recommendhidisplay("stdout");
@@ -36,14 +15,15 @@ Ascii::Ascii() : p_(new aa_renderparams({47, 33, 2.0, AA_FLOYD_S, 1, 0})) {
         hp.supported &= ~AA_BOLDFONT_MASK;
         hp.supported &= ~AA_EXTENDED;
         hp.supported &= ~AA_EIGHT;
-        hp.width = 80;
-        hp.height = 50;
+        hp.width = 70;
+        hp.height = 55;
         ctx_ = aa_autoinit(&hp);
         if(!ctx_) throw std::runtime_error("could not initialize aalib");
+        aa_setfont(ctx_, &typewriter_font);
         ctx_->driver = &mem_d;
         ctx_->params.supported |= AA_BOLD_MASK;
-        ctx_->params.mmwidth = 210;
-        ctx_->params.mmheight = 297;
+        ctx_->params.mmwidth = 117;
+        ctx_->params.mmheight = 231;
 }
 Ascii::~Ascii() {
         aa_close(ctx_);
@@ -54,7 +34,7 @@ bool Ascii::eventHappened() {
 double Ascii::aspect() const {
         return aa_mmwidth(ctx_) * 1.0 / aa_mmheight(ctx_);
 }
-void Ascii::displayImage(const cv::Mat* im) {
+void Ascii::displayImage(const cv::Mat* im, Printer printer) {
         if (im->depth() != CV_8U) throw std::runtime_error("input image not of depth CV_8U");
         if (im->elemSize() != 1) throw std::runtime_error("input image element size != 1");
         cv::Mat scaledIm;
@@ -75,15 +55,11 @@ void Ascii::displayImage(const cv::Mat* im) {
 
         int x, y;
         int idx = 0;
-        StreamAttr attr(&std::cout);
         for (y = 0; y < aa_scrheight(ctx_); y++) {
                 for (x = 0; x < aa_scrwidth(ctx_); x++) {
-                        attr.set(ctx_->attrbuffer[idx]);
-                        std::cout << ctx_->textbuffer[idx];
+                        printer(ctx_->textbuffer[idx], ctx_->attrbuffer[idx] == 2);
                         idx++;
                 }
-                std::cout << endl;
+                printer('\r', false);
         }
-        std::cout << endl;
-        std::cout << endl;
 }

@@ -16,7 +16,8 @@ Ascii();
 ~Ascii();
 bool eventHappened();
 double aspect() const;
-void displayImage(const cv::Mat* im);
+typedef std::function<void (char c, bool bold)> Printer;
+void displayImage(const cv::Mat* im, Printer printer);
 protected:
 aa_context* ctx_;
 std::unique_ptr<aa_renderparams> p_;
