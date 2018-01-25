@@ -22,7 +22,7 @@ Ascii::Ascii() : p_(new aa_renderparams({47, 33, 2.0, AA_FLOYD_S, 1, 0})) {
         aa_setfont(ctx_, &typewriter_font);
         ctx_->driver = &mem_d;
         ctx_->params.supported |= AA_BOLD_MASK;
-        ctx_->params.mmwidth = 117;
+        ctx_->params.mmwidth = 177;
         ctx_->params.mmheight = 231;
 }
 Ascii::~Ascii() {

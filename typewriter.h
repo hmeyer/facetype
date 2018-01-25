@@ -23,7 +23,11 @@ void enable_code(bool enable);
 void wait_for_space();
 bool should_stop() const;
 private:
+void reset_lf();
 void print_char_base(char c, bool undead=false);
 void set_bold(Boldness b);
 Boldness bold_ = kNormal;
+bool code_enabled_ = false;
+bool mod_enabled_ = false;
+bool shift_enabled_ = false;
 };

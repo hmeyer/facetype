@@ -206,6 +206,10 @@ void Typewriter::press_key(int key) {
 }
 
 void Typewriter::print_char(char c, Boldness b) {
+        if (c == '\n' || c == '\r') {
+                // Not sure why this is needed, but sometimes lf increases to 1,5 or 2.
+                reset_lf();
+        }
         if (gSignalStatus) return;
         set_bold(b);
         print_char_base(c);
@@ -225,19 +229,16 @@ void Typewriter::print_char_base(char c, bool undead) {
         }
         if (std::isupper(c)) {
                 enable_shift(true);
-                delay(kEnableWaitMs);
                 c = std::tolower(c);
         }
         auto shift_char_it = kShiftChars.find(c);
         if (shift_char_it != kShiftChars.end()) {
                 enable_shift(true);
-                delay(kEnableWaitMs);
                 c = shift_char_it->second;
         }
         auto mod_char_it = kModChars.find(c);
         if (mod_char_it != kModChars.end()) {
                 enable_mod(true);
-                delay(kEnableWaitMs);
                 c = mod_char_it->second;
         }
         auto ascii_2_key_it = kAscii2Key.find(c);
@@ -256,21 +257,34 @@ void Typewriter::print_string(const std::string& s, Boldness b) {
         }
 }
 
-void Typewriter::enable_shift(bool enable) {
-        digitalWrite(kLShiftPin, !enable);
+namespace {
+void generic_enable(int pin, bool intended_state, bool* current_state) {
+        if (intended_state == *current_state) {
+                return;
+        }
+        // Always before as well, in case the typi checks this after the
+        // keypress.
+        delay(kEnableWaitMs);
+        digitalWrite(pin, !intended_state);
+        *current_state = intended_state;
+        delay(kEnableWaitMs);
+}
+}  // namespace
+
+void Typewriter::enable_code(bool enable) {
+        generic_enable(kCodePin, enable, &code_enabled_);
 }
 
 void Typewriter::enable_mod(bool enable) {
-        digitalWrite(kModPin, !enable);
+        generic_enable(kModPin, enable, &mod_enabled_);
 }
 
-void Typewriter::enable_code(bool enable) {
-        digitalWrite(kCodePin, !enable);
+void Typewriter::enable_shift(bool enable) {
+        generic_enable(kLShiftPin, enable, &shift_enabled_);
 }
 
 void Typewriter::wait_for_space() {
         enable_code(true);
-        delay(kEnableWaitMs);
         bool pressed = false;
         while(gSignalStatus==0 && !pressed) {
                 print_char('2');
@@ -292,7 +306,12 @@ void Typewriter::wait_for_space() {
 
         }
         enable_code(false);
-        delay(kEnableWaitMs);
+}
+
+void Typewriter::reset_lf() {
+        enable_code(true);
+        print_char('1');
+        enable_code(false);
 }
 
 void Typewriter::set_bold(Boldness b) {
@@ -302,8 +321,6 @@ void Typewriter::set_bold(Boldness b) {
         if (b == bold_) return;
         bold_ = b;
         enable_code(true);
-        delay(kEnableWaitMs);
         press_key(bold_key);
         enable_code(false);
-        delay(kEnableWaitMs);
 }
