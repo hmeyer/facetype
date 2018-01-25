@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <array>
 #include <wiringPi.h>
+#include <csignal>
 
 const int kOutPort[] = {
         0, 2, 3, 12, 13, 14, 21, 22
@@ -18,9 +19,13 @@ const int kLShiftPin = 29;
 const int kCodePin = 28;
 const int kModPin = 27;
 
+const int kSpacePin = 26;
+
 // This value almost matches the typewriter speed, it's a bit faster actually.
-const int kEnableWaitMs = 10;
-const int kKeyPressDurationMs = 80;
+const int kEnableWaitMs = 20;
+const int kKeyPressDurationMs = 120 - kEnableWaitMs;
+const int kBoldDurationMs = 80;
+const int kLFDurationMs = 1500;
 const int kMaxLineChars = 70;
 
 const std::unordered_map<char, int> kAscii2Key = {
@@ -64,6 +69,7 @@ const std::unordered_map<char, int> kAscii2Key = {
 // 48 DELETE
 // 49 BACK
         {'\r', 51},
+        {'\n', 51},
         {' ', 52},
         {'o', 56},
         {'l', 57},
@@ -148,6 +154,18 @@ const std::unordered_map<char, std::array<char,2> > kAccentChars = {
 };
 
 
+namespace {
+volatile std::sig_atomic_t gSignalStatus;
+}
+
+void signal_handler(int signal) {
+        gSignalStatus |= signal;
+}
+
+bool Typewriter::should_stop() const {
+        return gSignalStatus != 0;
+}
+
 
 Typewriter::Typewriter() {
         wiringPiSetup();
@@ -163,6 +181,10 @@ Typewriter::Typewriter() {
                 digitalWrite(pin, HIGH);
                 pinMode(pin, OUTPUT);
         }
+        pinMode(kSpacePin, INPUT);
+        pullUpDnControl(kSpacePin, PUD_UP);
+        std::signal(SIGINT, signal_handler);
+        std::signal(SIGTERM, signal_handler);
 }
 
 void Typewriter::press_key(int key) {
@@ -170,20 +192,30 @@ void Typewriter::press_key(int key) {
         for (int i = 0; i < 8; i++) {
                 digitalWrite(kOutPort[i], i != key_mod_8);
         }
-        std::cout << std::endl;
         int select = (key >> 3) & 7;
         for (int i = 0; i < 3; i++) {
                 digitalWrite(kSelectPort[i], select & (1<<i));
         }
-        std::cout << std::endl;
         digitalWrite(kEnablePin, false);
         delay(kKeyPressDurationMs);
         digitalWrite(kEnablePin, true);
         delay(kEnableWaitMs);
+        if (key == 51) {
+                delay(kLFDurationMs);
+        }
 }
 
 void Typewriter::print_char(char c, Boldness b) {
+        if (c == '\n' || c == '\r') {
+                // Not sure why this is needed, but sometimes lf increases to 1,5 or 2.
+                reset_lf();
+        }
+        if (gSignalStatus) return;
+        set_bold(b);
         print_char_base(c);
+        if (b == kBold) {
+                delay(kBoldDurationMs);
+        }
 }
 
 void Typewriter::print_char_base(char c, bool undead) {
@@ -197,30 +229,21 @@ void Typewriter::print_char_base(char c, bool undead) {
         }
         if (std::isupper(c)) {
                 enable_shift(true);
-                delay(kEnableWaitMs);
                 c = std::tolower(c);
         }
         auto shift_char_it = kShiftChars.find(c);
         if (shift_char_it != kShiftChars.end()) {
                 enable_shift(true);
-                delay(kEnableWaitMs);
                 c = shift_char_it->second;
         }
         auto mod_char_it = kModChars.find(c);
         if (mod_char_it != kModChars.end()) {
                 enable_mod(true);
-                delay(kEnableWaitMs);
                 c = mod_char_it->second;
         }
         auto ascii_2_key_it = kAscii2Key.find(c);
         if (ascii_2_key_it != kAscii2Key.end()) {
                 press_key(ascii_2_key_it->second);
-                line_chars_++;
-                if (ascii_2_key_it->second == 51) line_chars_ = 0;
-                if (line_chars_ > kMaxLineChars) {
-                        line_chars_ = 0;
-                        press_key(51);
-                }
         }
         enable_shift(false);
         enable_mod(false);
@@ -234,14 +257,70 @@ void Typewriter::print_string(const std::string& s, Boldness b) {
         }
 }
 
-void Typewriter::enable_shift(bool enable) {
-        digitalWrite(kLShiftPin, !enable);
+namespace {
+void generic_enable(int pin, bool intended_state, bool* current_state) {
+        if (intended_state == *current_state) {
+                return;
+        }
+        // Always before as well, in case the typi checks this after the
+        // keypress.
+        delay(kEnableWaitMs);
+        digitalWrite(pin, !intended_state);
+        *current_state = intended_state;
+        delay(kEnableWaitMs);
+}
+}  // namespace
+
+void Typewriter::enable_code(bool enable) {
+        generic_enable(kCodePin, enable, &code_enabled_);
 }
 
 void Typewriter::enable_mod(bool enable) {
-        digitalWrite(kModPin, !enable);
+        generic_enable(kModPin, enable, &mod_enabled_);
 }
 
-void Typewriter::enable_code(bool enable) {
-        digitalWrite(kCodePin, !enable);
+void Typewriter::enable_shift(bool enable) {
+        generic_enable(kLShiftPin, enable, &shift_enabled_);
+}
+
+void Typewriter::wait_for_space() {
+        enable_code(true);
+        bool pressed = false;
+        while(gSignalStatus==0 && !pressed) {
+                print_char('2');
+                for(int i = 0; i< 100; i++) {
+                        if (digitalRead(kSpacePin) == LOW) {
+                                pressed = true;
+                                break;
+                        }
+                        delay(1);
+                }
+                print_char('1');
+                for(int i = 0; i< 100; i++) {
+                        if (digitalRead(kSpacePin) == LOW) {
+                                pressed = true;
+                                break;
+                        }
+                        delay(1);
+                }
+
+        }
+        enable_code(false);
+}
+
+void Typewriter::reset_lf() {
+        enable_code(true);
+        print_char('1');
+        enable_code(false);
+}
+
+void Typewriter::set_bold(Boldness b) {
+        const static int bold_key = [](){
+                                            return kAscii2Key.find('7')->second;
+                                    } ();
+        if (b == bold_) return;
+        bold_ = b;
+        enable_code(true);
+        press_key(bold_key);
+        enable_code(false);
 }
