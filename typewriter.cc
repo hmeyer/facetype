@@ -309,8 +309,11 @@ void Typewriter::wait_for_space() {
 }
 
 void Typewriter::reset_lf() {
+        const static int lf_1_key = [](){
+                                            return kAscii2Key.find('1')->second;
+                                    } ();
         enable_code(true);
-        print_char('1');
+        press_key(lf_1_key);
         enable_code(false);
 }
 
