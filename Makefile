@@ -1,5 +1,5 @@
 CC=g++
-CXXFLAGS=-O1 -Wall -Wextra -MMD -std=c++11
+CXXFLAGS=-O2 -Wall -Wextra -MMD -std=c++11
 LDLIBS=-lm -lopencv_core -lopencv_objdetect -lopencv_imgproc -lopencv_highgui -lopencv_videoio -laa -lwiringPi
 facedetect: facedetect.o ascii.o typewriter.o
 clean:

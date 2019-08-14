@@ -42,7 +42,8 @@ int main( int argc, const char** argv )
 {
         CommandLineParser parser(argc, argv,
                                  "{help h||}"
-                                 "{face_cascade|../../data/haarcascades/haarcascade_frontalface_alt.xml|}");
+                                 "{face_cascade|/opt/share/opencv4/haarcascades/haarcascade_frontalface_alt.xml|}"
+                                 "{video_device|/dev/video0|}");
         parser.about( "\nThis program demonstrates using the cv::CascadeClassifier class to detect objects (Face) in a video stream.\n"
                       "You can use Haar or LBP features.\n\n" );
 
@@ -52,37 +53,39 @@ int main( int argc, const char** argv )
         //-- 1. Load the cascades
         if( !face_cascade.load( face_cascade_name ) ) { parser.printMessage(); cerr << "--(!)Error loading face cascade" << endl; return -1; };
 
+	String video_device = parser.get<String>("video_device"); 
+
         //-- 2. Read the video stream
-        capture.open( 0 );
+        capture.open( video_device );
         if ( !capture.isOpened() ) { cerr << "--(!)Error opening video capture" << endl; return -1; }
-        capture.set(CV_CAP_PROP_FRAME_WIDTH, 640);
-        capture.set(CV_CAP_PROP_FRAME_HEIGHT, 400);
+        capture.set(CAP_PROP_FRAME_WIDTH, 320);
+        capture.set(CAP_PROP_FRAME_HEIGHT, 200);
 
-        // Mat frame;
-        // Ascii ascii;
-        // cout << "capture" << endl;
-        // while (  capture.read(frame) )
-        // {
-        //         if( frame.empty() )
-        //         {
-        //                 printf(" --(!) No captured frame -- Break!");
-        //                 break;
-        //         }
-        //
-        //         cout << "detecting" << endl;
-        //         //-- 3. Apply the classifier to the frame
-        //         detectAndDisplay( frame,face_cascade, ascii.aspect());
-        //
-        //         int c = waitKey(10);
-        //         if( (char)c == 27 ) { break; } // escape
-        //         cout << "capture" << endl;
-        // }
-
-
+/*
+        Mat frame;
+        Ascii ascii;
+        cout << "capture" << endl;
+        while (  capture.read(frame) )
+        {
+                if( frame.empty() )
+                {
+                        printf(" --(!) No captured frame -- Break!");
+                        break;
+                }
+		// cv::flip(frame, frame, -1);
+                cout << "detecting" << endl;
+                //-- 3. Apply the classifier to the frame
+                detectAndDisplay( frame,face_cascade, ascii.aspect());
+       
+                int c = waitKey(10);
+                if( (char)c == 27 ) { break; } // escape
+                cout << "capture" << endl;
+        }
+*/
         Typewriter typi;
 
         while(!typi.should_stop()) {
-                typi.wait_for_space();
+//                typi.wait_for_space();
                 typi.print_char('\r');
 
                 Mat frame;
@@ -101,19 +104,37 @@ int main( int argc, const char** argv )
                                 cerr << "captured empty frame" << endl;
                                 continue;
                         }
+			assert(frame.size.dims() == 2);
+                        cout << "captured: " << frame.size[1] << " x " << frame.size[0] << endl;
+			// cv::flip(frame, frame, -1);
                         cout << "detecting" << endl;
+/*
                         if (!detectAndCrop( frame, face_cascade, &croppedFaceImage, ascii.aspect() )) {
                                 cerr << "didn't detect face" << endl;
                                 continue;
                         }
+*/
                         detected_face = true;
                         cout << "successfully detected. displaying." << endl;
                         auto typi_print = [&typi](char c, bool bold) {
                                                   tty_print(c, bold);
                                                   typi.print_char(c, bold ? kBold : kNormal);
                                           };
+/*
                         ascii.displayImage(&croppedFaceImage, typi_print);
-                        // ascii.displayImage(&croppedFaceImage, tty_print);
+                        typi.print_string("\n"
+                                          "          "
+                                          "          "
+                                          "          "
+                                          "          "
+                                          "          "
+                                          "        "
+                                          "facetype 2019", kBold);
+*/
+//                        ascii.displayImage(&croppedFaceImage, tty_print);
+			Mat gray( cvRound (frame.rows), cvRound(frame.cols), CV_8UC1 );
+			cvtColor( frame, gray, COLOR_RGB2GRAY );
+                        ascii.displayImage(&gray, tty_print);
                 }
 
                 //-- 3. Apply the classifier to the frame
