@@ -66,27 +66,6 @@ int main( int argc, const char** argv )
 		return -1;
 	}
 
-/*
-        Mat frame;
-        Ascii ascii;
-        cout << "capture" << endl;
-        while (  capture.read(frame) )
-        {
-                if( frame.empty() )
-                {
-                        printf(" --(!) No captured frame -- Break!");
-                        break;
-                }
-		// cv::flip(frame, frame, -1);
-                cout << "detecting" << endl;
-                //-- 3. Apply the classifier to the frame
-                detectAndDisplay( frame,face_cascade, ascii.aspect());
-       
-                int c = waitKey(10);
-                if( (char)c == 27 ) { break; } // escape
-                cout << "capture" << endl;
-        }
-*/
         Typewriter typi;
 
         while(!typi.should_stop()) {
