@@ -20,6 +20,7 @@ std::string DescribeTensor(const TfLiteTensor& t) {
 }
 
 std::vector<std::string> GetLabels(const std::string& filename) {
+  if (filename.empty()) return std::vector<std::string>();
   std::ifstream in(filename);
   if(!in) {
     throw std::invalid_argument("cannot open " + filename);
@@ -126,7 +127,13 @@ bool TfDetector::process_outputs(int img_width, int img_height, cv::Rect* r) {
       r->y = top;
       r->width = right - left;
       r->height = bottom - top;
-      std::cout << "detection: cls: " << labels_.at(cls) << " score: " << score;
+      std::string label;
+      if (cls < labels_.size()) {
+        label = labels_[cls];
+      } else {
+        label = "class #" + std::to_string(cls);
+      }
+      std::cout << "detection: cls: " << label << " score: " << score;
       std::cout << " [" << r->x << ", " << r->y << ", " << r->width << ", " << r->height << "]";
       std::cout << std::endl;
     }
