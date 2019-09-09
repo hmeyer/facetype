@@ -1,11 +1,17 @@
 #include "detector.h"
 #include <opencv2/imgproc.hpp>
+#include <iostream>
+#include <chrono>
 
 bool Detector::detectAndCrop(const cv::Mat& img, double crop_aspect, cv::Mat* cropped) {
   cv::Rect r;
   cv::Mat eq_img;
   cv::equalizeHist(img, eq_img);
-  if (!detect(eq_img, &r)) return false;
+  auto start_time = std::chrono::steady_clock::now();
+  bool detect_result = detect(eq_img, &r);
+  auto end_time = std::chrono::steady_clock::now();
+  std::cout << "detection took: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << " ms" << std::endl;
+  if (!detect_result) return false;
 
   double aspect = r.width * 1.0 / r.height;
 

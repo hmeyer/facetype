@@ -10,6 +10,7 @@
 #include "ascii.h"
 #include "detector.h"
 #include "cv_detector.h"
+#include "tf_detector.h"
 #include "typewriter.h"
 #include <wiringPi.h>
 
@@ -37,13 +38,23 @@ int main( int argc, const char** argv )
         CommandLineParser parser(argc, argv,
                                  "{help h||}"
                                  "{face_cascade|/opt/share/opencv4/haarcascades/haarcascade_frontalface_alt.xml|}"
+                                 "{tflite_model||}"
+                                 "{labels||}"
                                  "{width|640|}"
                                  "{height|480|}");
         parser.about( "\nThis program demonstrates using the cv::CascadeClassifier class to detect objects (Face) in a video stream.\n"
                       "You can use Haar or LBP features.\n\n" );
 
+	unique_ptr<Detector> detector;
 	string cascade_name = parser.get<String>("face_cascade");
-	auto detector =  std::make_unique<CvDetector>(cascade_name);
+	string tflite_model_filename = parser.get<String>("tflite_model");
+	string label_filename = parser.get<String>("labels");
+
+	if (!tflite_model_filename.empty()) {
+          detector = make_unique<TfDetector>(tflite_model_filename, label_filename);
+	} else {
+	  detector =  make_unique<CvDetector>(cascade_name);
+	}
 
         //-- set camera params
 	raspicam::RaspiCam_Cv camera;

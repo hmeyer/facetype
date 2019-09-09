@@ -3,3 +3,5 @@
 *.swp
 facedetect
 run.sh
+*.tflite
+face_labels_list.txt
