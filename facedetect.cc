@@ -38,7 +38,9 @@ int main( int argc, const char** argv )
                                  "{help h||}"
                                  "{face_cascade|/opt/share/opencv4/haarcascades/haarcascade_frontalface_alt.xml|}"
                                  "{width|640|}"
-                                 "{height|480|}");
+                                 "{height|480|}"
+                                 "{detection_width|320|}"
+                                 "{detection_height|240|}");
         parser.about( "\nThis program demonstrates using the cv::CascadeClassifier class to detect objects (Face) in a video stream.\n"
                       "You can use Haar or LBP features.\n\n" );
 
@@ -46,6 +48,7 @@ int main( int argc, const char** argv )
 	string cascade_name = parser.get<String>("face_cascade");
 
 	detector =  make_unique<CvDetector>(cascade_name);
+        detector->set_detection_size(parser.get<int>("detection_width") ,parser.get<int>("detection_height") );
 
         //-- set camera params
 	raspicam::RaspiCam_Cv camera;
