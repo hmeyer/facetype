@@ -6,6 +6,9 @@
 #include <wiringPi.h>
 #include <csignal>
 
+const int Typewriter::kWidth;
+const int Typewriter::kHeight;
+
 const int kOutPort[] = {
         0, 2, 3, 12, 13, 14, 21, 22
 };
@@ -255,6 +258,14 @@ void Typewriter::print_string(const std::string& s, Boldness b) {
         for (char c : s) {
                 print_char(c, b);
         }
+}
+
+void Typewriter::print_align_right(const std::string& s, Boldness b) {
+	int space = kWidth - s.size();
+        for (int i = 0; i < space; i++) {
+                print_char(' ', kNormal);
+        }
+	print_string(s, b);
 }
 
 namespace {

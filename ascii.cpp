@@ -7,7 +7,7 @@
 using namespace std;
 using namespace cv;
 
-Ascii::Ascii() : p_(new aa_renderparams({47, 33, 2.0, AA_FLOYD_S, 1, 0})) {
+Ascii::Ascii(int width, int height) : p_(new aa_renderparams({47, 33, 2.0, AA_FLOYD_S, 1, 0})) {
         aa_recommendhidisplay("stdout");
         aa_hardwareparams hp = aa_defparams;
         hp.supported &= ~AA_DIM_MASK;
@@ -15,8 +15,8 @@ Ascii::Ascii() : p_(new aa_renderparams({47, 33, 2.0, AA_FLOYD_S, 1, 0})) {
         hp.supported &= ~AA_BOLDFONT_MASK;
         hp.supported &= ~AA_EXTENDED;
         hp.supported &= ~AA_EIGHT;
-        hp.width = 70;
-        hp.height = 55;
+        hp.width = width;
+        hp.height = height;
         ctx_ = aa_autoinit(&hp);
         if(!ctx_) throw std::runtime_error("could not initialize aalib");
         aa_setfont(ctx_, &typewriter_font);

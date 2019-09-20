@@ -65,11 +65,11 @@ int main( int argc, const char** argv )
         Typewriter typi;
 
         while(!typi.should_stop()) {
-//                typi.wait_for_space();
+                typi.wait_for_space();
                 typi.print_char('\r');
 
                 Mat frame;
-                Ascii ascii;
+                Ascii ascii(Typewriter::kWidth, Typewriter::kHeight);
                 Mat croppedFaceImage;
 
                 bool detected_face = false;
@@ -99,19 +99,11 @@ int main( int argc, const char** argv )
                         cout << "successfully detected. displaying." << endl;
                         auto typi_print = [&typi](char c, bool bold) {
                                                   tty_print(c, bold);
-//                                                  typi.print_char(c, bold ? kBold : kNormal);
+                                                  typi.print_char(c, bold ? kBold : kNormal);
                                           };
                         ascii.displayImage(&croppedFaceImage, typi_print);
-/*
-                        typi.print_string("\n"
-                                          "          "
-                                          "          "
-                                          "          "
-                                          "          "
-                                          "          "
-                                          "        "
-                                          "facetype 2019", kBold);
-*/
+                        typi.print_char('\n', kNormal);
+                        typi.print_align_right("facetype 2019", kBold);
                 }
 
         }

@@ -12,7 +12,7 @@ struct aa_renderparams;
 
 class Ascii {
 public:
-Ascii();
+Ascii(int width, int height);
 ~Ascii();
 bool eventHappened();
 double aspect() const;
