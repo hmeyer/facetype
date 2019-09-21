@@ -12,7 +12,7 @@ class Typewriter {
     set_bold(kNormal);
     enable_mod(false);
     enable_shift(false);
-    enable_code (false);
+    enable_code(false);
   };
   static const int kWidth = 70;
   static const int kHeight = 55;

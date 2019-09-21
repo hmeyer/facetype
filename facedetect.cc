@@ -4,6 +4,7 @@
 #include <raspicam/raspicam_cv.h>
 
 #include <stdio.h>
+#include <chrono>
 #include <iostream>
 #include <memory>
 
@@ -30,6 +31,17 @@ void tty_print(char c, bool bold) {
         }
         std::cout << c << std::flush;
 }
+
+string now_string(const string& format = "%F %T") {
+  time_t now_c = chrono::system_clock::to_time_t(chrono::system_clock::now());
+  tm now_tm = *std::localtime(&now_c);
+  char buff[70];
+  if (strftime(buff, sizeof buff, format.c_str(), &now_tm)) {
+    return buff;
+  }
+  return string();
+}
+
 
 /** @function main */
 int main( int argc, const char** argv )
@@ -96,14 +108,16 @@ int main( int argc, const char** argv )
                         }
 
                         detected_face = true;
-                        cout << "successfully detected. displaying." << endl;
+  			cout << now_string();
+                        cout << " successfully detected. displaying." << endl;
                         auto typi_print = [&typi](char c, bool bold) {
                                                   tty_print(c, bold);
                                                   typi.print_char(c, bold ? kBold : kNormal);
                                           };
                         ascii.displayImage(&croppedFaceImage, typi_print);
-                        typi.print_char('\n', kNormal);
-                        typi.print_align_right("facetype 2019", kBold);
+                        typi.print_char('\n');
+                        typi.print_align_right("facetype " + now_string("%Y"), kBold);
+                        typi.print_char('\n');
                 }
 
         }
