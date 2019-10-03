@@ -7,7 +7,7 @@
 using namespace std;
 using namespace cv;
 
-Ascii::Ascii(int width, int height) : p_(new aa_renderparams({47, 33, 2.0, AA_FLOYD_S, 1, 0})) {
+Ascii::Ascii(int width, int height) : p_(new aa_renderparams({47, 33, 1.7, AA_FLOYD_S, 1, 0})) {
         aa_recommendhidisplay("stdout");
         aa_hardwareparams hp = aa_defparams;
         hp.supported &= ~AA_DIM_MASK;
