@@ -3,7 +3,10 @@
 #include <iostream>
 #include <chrono>
 
-bool Detector::detectAndCrop(const cv::Mat& img, double crop_aspect, cv::Mat* cropped) {
+bool Detector::detectAndCrop(const cv::Mat& color_img, double crop_aspect, cv::Mat* cropped) {
+  cv::Mat img( color_img.rows, color_img.cols, CV_8UC1 );
+  cv::cvtColor( color_img, img, cv::COLOR_RGB2GRAY );
+  
   cv::Rect r;
   cv::Mat eq_img;
   if (detection_width_ > 0 && detection_height_ > 0) {

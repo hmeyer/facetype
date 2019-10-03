@@ -1,7 +1,6 @@
 #include <opencv2/objdetect.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
-#include <raspicam/raspicam_cv.h>
 
 #include <stdio.h>
 #include <chrono>
@@ -49,6 +48,7 @@ int main( int argc, const char** argv )
         CommandLineParser parser(argc, argv,
                                  "{help h||}"
                                  "{face_cascade|/opt/share/opencv4/haarcascades/haarcascade_frontalface_alt.xml|}"
+				 "{video_device|/dev/video0|}"
                                  "{width|640|}"
                                  "{height|480|}"
                                  "{detection_width|320|}"
@@ -56,23 +56,20 @@ int main( int argc, const char** argv )
         parser.about( "\nThis program demonstrates using the cv::CascadeClassifier class to detect objects (Face) in a video stream.\n"
                       "You can use Haar or LBP features.\n\n" );
 
+	VideoCapture capture;
+	String video_device = parser.get<String>("video_device"); 
+
+        //-- 2. Read the video stream
+        capture.open( video_device );
+        if ( !capture.isOpened() ) { cerr << "--(!)Error opening video capture" << endl; return -1; }
+        capture.set ( CAP_PROP_FRAME_WIDTH, parser.get<int>("width") );
+        capture.set ( CAP_PROP_FRAME_HEIGHT, parser.get<int>("height") );
+
 	unique_ptr<Detector> detector;
 	string cascade_name = parser.get<String>("face_cascade");
 
 	detector =  make_unique<CvDetector>(cascade_name);
         detector->set_detection_size(parser.get<int>("detection_width") ,parser.get<int>("detection_height") );
-
-        //-- set camera params
-	raspicam::RaspiCam_Cv camera;
-	camera.set( CAP_PROP_FORMAT, CV_8UC1 );
-        camera.set ( CAP_PROP_FRAME_WIDTH, parser.get<int>("width") );
-        camera.set ( CAP_PROP_FRAME_HEIGHT, parser.get<int>("height") );
-	//Open camera
-	cout << "Opening Camera..." << endl;
-	if (!camera.open()) {
-		cerr << "Error opening the camera" << endl;
-		return -1;
-	}
 
         Typewriter typi;
 
@@ -88,11 +85,10 @@ int main( int argc, const char** argv )
 
                 while(!detected_face && !typi.should_stop()) {
 
-                        if (!camera.grab()) {
+                        if (!capture.read(frame)) {
                                 cerr << "capture error" << endl;
                                 continue;
                         }
-                        camera.retrieve(frame);
                         if (frame.empty()) {
                                 cerr << "captured empty frame" << endl;
                                 continue;
