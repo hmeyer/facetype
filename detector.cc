@@ -3,6 +3,24 @@
 #include <iostream>
 #include <chrono>
 
+namespace {
+  // Will rotate img (and adjust r) if this helps to better match target_aspect.
+  void maybeRotate(double target_aspect, cv::Rect* r, cv::Mat* img) {
+    if ( (target_aspect > 1.0) == ((r->width * 1.0 / r->height) > 1.0) ) {
+      return;
+    }
+    cv::Mat t;
+    cv::rotate(*img, t, cv::ROTATE_90_CLOCKWISE);
+    cv::Rect tr;
+    tr.x = img->size().height - (r->y + r->height);
+    tr.width = r->height;
+    tr.y = r->x;
+    tr.height = r->width;
+    *img = t;
+    *r = tr;
+  }
+}  // namespace
+
 bool Detector::detectAndCrop(const cv::Mat& color_img, double crop_aspect, cv::Mat* cropped) {
   cv::Mat img( color_img.rows, color_img.cols, CV_8UC1 );
   cv::cvtColor( color_img, img, cv::COLOR_RGB2GRAY );
@@ -27,6 +45,8 @@ bool Detector::detectAndCrop(const cv::Mat& color_img, double crop_aspect, cv::M
   r.width *= img.size().width / eq_img.size().width;
   r.y *= img.size().height / eq_img.size().height;
   r.height *= img.size().height / eq_img.size().height;
+
+  maybeRotate(crop_aspect, &r, &img);
 
   double aspect = r.width * 1.0 / r.height;
 
