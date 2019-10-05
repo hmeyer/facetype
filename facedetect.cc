@@ -51,6 +51,7 @@ int main( int argc, const char** argv )
 				 "{video_device|/dev/video0|}"
                                  "{width|640|}"
                                  "{height|480|}"
+                                 "{dryrun|false|}"
                                  "{detection_width|320|}"
                                  "{detection_height|240|}");
         parser.about( "\nThis program demonstrates using the cv::CascadeClassifier class to detect objects (Face) in a video stream.\n"
@@ -71,11 +72,16 @@ int main( int argc, const char** argv )
 	detector =  make_unique<CvDetector>(cascade_name);
         detector->set_detection_size(parser.get<int>("detection_width") ,parser.get<int>("detection_height") );
 
-        Typewriter typi;
+        unique_ptr<BaseTypewriter> typi;
+        if (parser.get<bool>("dryrun")) {
+          typi = make_unique<BaseTypewriter>();
+        } else {
+          typi = make_unique<Typewriter>();
+        }
 
-        while(!typi.should_stop()) {
-                typi.wait_for_space();
-                typi.print_char('\r');
+        while(!typi->should_stop()) {
+                typi->wait_for_space();
+                typi->print_char('\r');
 
                 Mat frame;
                 Ascii ascii(Typewriter::kWidth, Typewriter::kHeight);
@@ -83,7 +89,7 @@ int main( int argc, const char** argv )
 
                 bool detected_face = false;
 
-                while(!detected_face && !typi.should_stop()) {
+                while(!detected_face && !typi->should_stop()) {
 
                         if (!capture.read(frame)) {
                                 cerr << "capture error" << endl;
@@ -108,12 +114,12 @@ int main( int argc, const char** argv )
                         cout << " successfully detected. displaying." << endl;
                         auto typi_print = [&typi](char c, bool bold) {
                                                   tty_print(c, bold);
-                                                  typi.print_char(c, bold ? kBold : kNormal);
+                                                  typi->print_char(c, bold ? kBold : kNormal);
                                           };
                         ascii.displayImage(&croppedFaceImage, typi_print);
-                        typi.print_char('\n');
-                        typi.print_align_right("facetype " + now_string("%Y"), kBold);
-                        typi.print_char('\n');
+                        typi->print_char('\n');
+                        typi->print_align_right("facetype " + now_string("%Y"), kBold);
+                        typi->print_char('\n');
                 }
 
         }
