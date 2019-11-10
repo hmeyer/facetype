@@ -8,11 +8,11 @@
 
 class CvDetector : public Detector {
 public:
-  CvDetector(const std::string& cascade_name);
+CvDetector(const std::string& cascade_name);
 protected:
-  bool detect(const cv::Mat& img, cv::Rect* r) override;
+bool detect(const cv::Mat& img, cv::Rect* r, double* facewidth) override;
 private:
-  cv::CascadeClassifier cascade_;
+cv::CascadeClassifier cascade_;
 };
 
 #endif
